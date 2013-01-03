@@ -1,0 +1,391 @@
+                                                        *******PHP Deployment With Capistrano*******
+
+-----------------Assumptions & Requirements-------------------
+
+We have RUBY and RUBY gem installed on our system.
+
+Need to install Capistrano to deploy the PHP application.
+
+Configure Application.
+
+Deploy the Recipe
+
+Create an Repository on GitHub and Push the data on the repository.
+
+The above all the things are explain below:
+
+=========================================================================
+
+Installing CAPISTRANO.
+
+
+I am installed capistrano-2.13.5, it is gem install.
+
+$ gem install capistrano
+Successfully installed capistrano-2.13.5
+1 gem installed
+Installing ri documentation for capistrano-2.13.5...
+Installing RDoc documentation for capistrano-2.13.5...
+=========================================================================
+
+Application Configuration.
+
+Step1:
+-------
+Here I am created a simple php file and it is stored into the directory where we want to store the capistrano configuration.
+
+$ vim index.php
+this is index.html.
+ 
+<?php
+  /* Create simple Website with PHP - http://coursesweb.net/php-mysql/ */
+
+// create an array with data for title, and meta, for each page
+$pgdata = array();
+$pgdata['index'] = array(
+  'title'=>'Title for Home page',
+  'description'=>'Here add the description for Home page',
+  'keywords'=>'meta keywords, for, home page'
+);
+$pgdata['about_me'] = array(
+  'title'=>'Title for About Me page',
+  'description'=>'Description for About Me, http://coursesweb.net',
+  'keywords'=>'about me, http://coursesweb.net'
+);
+$pgdata['images'] = array(
+  'title'=>'Title for Images',
+  'description'=>'Here add the description for the page with images',
+  'keywords'=>'images, pictures, photo'
+);
+
+// set the page name
+$pgname = isset($_GET['pg']) ? trim(strip_tags($_GET['pg'])) : 'index';
+
+// get title, and meta data for current /accessed page
+$title = $pgdata[$pgname]['title'];
+$description = $pgdata[$pgname]['description'];
+$keywords = $pgdata[$pgname]['keywords'];
+
+// set header for utf-8 encode
+header('Content-type: text/html; charset=utf-8');
+?>
+<!doctype html>
+<html>
+<head>
+ <meta charset="utf-8" />
+ <title><?php echo $title; ?></title>
+ <meta name="description" content="<?php echo $description; ?>" />
+ <meta name="keywords" content="<?php echo $keywords; ?>" />
+ <!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+ <style><!--
+ body {
+  margin:0;
+  text-align:center;
+  padding:0 1em;
+ }
+ header, footer, section, aside, nav, article { display: block; }
+ #posts{
+  position:relative;
+  width:99%;
+  margin:0.5em auto;
+  background:#fdfefe;
+ }
+ #menu {
+  float:left;
+  width:15em;
+  margin:0 auto;
+  background:#f8f9fe;
+  border:1px solid blue;
+  text-align:left;
+ }
+ #menu li a:hover {
+   text-decoration:none;
+   color:#01da02;
+ }
+ #article {
+  margin:0 1em 0 16em;
+  background:#efeffe;
+  border:1px solid #01da02;
+  padding:0.2em 0.4em;
+ }
+ #footer {
+  clear:both;
+  position:relative;
+  background:#edfeed;
+  border:1px solid #dada01;
+  width:99%;
+  margin:2em auto 0.5em auto;
+ }
+ --></style>
+</head>
+<body>
+
+<header id="header">
+ <h1><?php echo $title; ?></h1>
+</header>
+
+<section id="posts">
+ <nav id="menu">
+  <ul>
+   <li><a href="index.php" title="Home page">Home</a></li>
+   <li><a href="index.php?pg=about_me" title="About Me">About Me</a></li>
+   <li><a href="index.php?pg=images" title="Images">Images</a></li>
+  </ul>
+ </nav>
+ <article id="article"><?php echo file_get_contents('pages/'. $pgname. '.htm'); ?></article>
+</section>
+
+<footer id="footer">
+ <p>From: <a href="http://coursesweb.net/php-mysql/" title="Free PHP-MySQL course">PHP-MySQL Course</a></p>
+</footer>
+
+</body>
+</html> 
+=============================================================================================================
+
+Step2
+-------
+Create config Directory and Capify
+
+Capistrano places its configuration file, called a recipe, in a directory named config. Since my application doesn’t have a config directory, I will create one.
+
+$ mkdir config
+Next we will “Capify” the application. This creates the necessary default files.
+$ capify .
+	[add] writing `./Capfile'
+	[add] writing `./config/deploy.rb'
+	[done] capified!
+=============================================================================================================
+Step3
+-------
+Modifying The Default Recipe (Configuration)
+$ vim ../config/deploy.rb
+
+set :application, "Hello"
+set :repository,  "https://github.com/amolkhanorkar-webonise/Php_Deployment"
+set :scm, 'git'
+set :branch, 'develop'
+
+
+# set :scm, :git # You can set :scm explicitly or Capistrano will make an intelligent guess based on known version control directory names
+# Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
+
+role :web, "192.168.0.130"                          # Your HTTP server, Apache/etc                                              //Remote web server ip
+role :app, "192.168.0.130"                          # This may be the same as your `Web` server
+#role :db,  "ip of database server", :primary => true # This is where Rails migrations will run
+#role :db,  "your slave db-server here"
+
+set :deploy_to, "/var/www/Php_Deployment"                                                                                      //Path of app deployment on web server.
+set :document_root, "/var/www/Php_Deployment/httpdocs/current"                                                                 //Path of Document Root access by php app.
+set :use_sudo, false
+set :keep_releases, 4 
+
+# if you want to clean up old releases on each deploy uncomment this:
+# after "deploy:restart", "deploy:cleanup"
+
+# if you're still using the script/reaper helper you will need
+# these http://github.com/rails/irs_process_scripts
+
+# If you are using Passenger mod_rails uncomment this:
+# namespace :deploy do
+#   task :start do ; end
+#   task :stop do ; end
+#   task :restart, :roles => :app, :except => { :no_release => true } do
+#     run "#{try_sudo} touch #{File.join(current_path,'tmp','restart.txt')}"
+#   end
+# end
+after "deploy:update", "deploy:cleanup" 
+namespace :deploy do
+ task :update do
+  transaction do
+  update_code
+  symlink
+  end
+ end
+ 
+ task :finalize_update do
+  transaction do
+   run "chmod -R g+w #{releases_path}/#{release_name}"
+   end
+  end
+ 
+ task :symlink do
+  transaction do
+   run "ln -nfs #{current_release} #{deploy_to}/#{current_dir}"
+   run "ln -nfs #{deploy_to}/#{current_dir} #{document_root}"
+   end
+  end
+ 
+ task :migrate do
+  # nothing
+ end
+ task :restart do
+  # nothing
+ end
+end
+
+Description
+------------
+In the above file we specifying the entries of the configuration of the application, we deploy the application using the remote web and application server.
+Here we allow the 4 releases of the appliction into the '/var/www/Php_deployment/...' and the exceeded releases are flushed. 
+================================================================================================================================================================
+
+Step4
+------
+Configuring For a PHP Deployment
+
+Creating Rails specific symbolic links,to get around these assumptions we will need to bypass or modify some of the existing default tasks.
+namespace :deploy do
+ 
+		task :update do
+			transaction do
+				update_code
+				symlink
+			end
+		end
+ 
+		task :finalize_update do
+			transaction do
+				run "chmod -R g+w #{releases_path}/#{release_name}"
+			end
+		end
+ 
+		task :symlink do
+			transaction do
+				run "ln -nfs #{current_release} #{deploy_to}/#{current_dir}"
+				run "ln -nfs #{deploy_to}/#{current_dir} #{document_root}"
+			end
+		end
+ 
+		task :migrate do
+			# nothing
+		end
+ 
+		task :restart do
+			# nothing
+		end
+ end
+=================================================================================================================================================================
+Step5
+------
+The Initial “Setup” Deploy 
+
+$ cap deploy:setup
+The first step of deploying your PHP application with Capistrano is to run the setup task. This will create some directories on your deployment server in the correct location.
+
+$ cap deloy:check
+This is an tricky thing to check the dependencies for our application with Capistrano,it does a great job at sanity-checking your deployment environment: existence of directories, write permissions etc.
+O/p:-
+* executing "chmod -R g+w /var/www/Php_Deployment/releases/20130103093443"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 7ms
+  * 2013-01-03 15:05:05 executing `deploy:symlink'
+  * executing "ls -x /var/www/Php_Deployment/releases"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 6ms
+  * executing "ln -nfs /var/www/Php_Deployment/releases/20130103093443 /var/www/Php_Deployment/current"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 6ms
+  * executing "ln -nfs /var/www/Php_Deployment/current /var/www/Php_Deployment/httpdocs/current"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 6ms
+ ** transaction: commit
+    triggering after callbacks for `deploy:update'
+  * 2013-01-03 15:05:05 executing `deploy:cleanup'
+  * executing "ls -xt /var/www/Php_Deployment/releases"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 7ms
+*** no old releases to clean up
+  * 2013-01-03 15:05:06 executing `deploy:restart'
+
+
+
+
+$ cap deploy
+ Deploys your project. This calls both `update’ and `restart’. Note that this will generally only work for applications that have already been deployed once. For a “cold” deploy, you’ll want to take a look at the `deploy:cold’ task, which handles the cold start specifically.
+
+
+
+O/p:-
+* 2013-01-03 15:12:16 executing `deploy'
+  * 2013-01-03 15:12:16 executing `deploy:update'
+ ** transaction: start
+  * 2013-01-03 15:12:16 executing `deploy:update_code'
+    executing locally: "git ls-remote https://github.com/amolkhanorkar-webonise/Php_Deployment develop"
+    command finished in 1823ms
+  * executing "git clone -q https://github.com/amolkhanorkar-webonise/Php_Deployment /var/www/Php_Deployment/releases/20130103094218 && cd /var/www/Php_Deployment/releases/20130103094218 && git checkout -q -b deploy 6236c9a4302dbc0525369cada3514911f747d0c4 && (echo 6236c9a4302dbc0525369cada3514911f747d0c4 > /var/www/Php_Deployment/releases/20130103094218/REVISION)"
+    servers: ["192.168.0.130"]
+Password: ***********
+    [192.168.0.130] executing command
+    command finished in 5232ms
+  * 2013-01-03 15:12:28 executing `deploy:finalize_update'
+  * executing "chmod -R g+w /var/www/Php_Deployment/releases/20130103094218"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 7ms
+  * 2013-01-03 15:12:28 executing `deploy:symlink'
+  * executing "ls -x /var/www/Php_Deployment/releases"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 7ms
+  * executing "ln -nfs /var/www/Php_Deployment/releases/20130103094218 /var/www/Php_Deployment/current"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 6ms
+  * executing "ln -nfs /var/www/Php_Deployment/current /var/www/Php_Deployment/httpdocs/current"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 6ms
+ ** transaction: commit
+    triggering after callbacks for `deploy:update'
+  * 2013-01-03 15:12:28 executing `deploy:cleanup'
+  * executing "ls -xt /var/www/Php_Deployment/releases"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 6ms
+ ** keeping 4 of 6 deployed releases
+  * executing "rm -rf /var/www/Php_Deployment/releases/20130103093827 /var/www/Php_Deployment/releases/20130103094020"
+    servers: ["192.168.0.130"]
+    [192.168.0.130] executing command
+    command finished in 9ms
+  * 2013-01-03 15:12:28 executing `deploy:restart'
+===========================================================================================================================================================================
+
+Finally we are going to check our deployed application but we have to make it by using local domain name 'local.testphp.com'.
+Thats why we have to make the entry into 
+
+'/etc/apache2/httpd.conf':
+
+<VirtualHost 192.168.0.27:80>
+ServerName      local.sampleapp.com
+DocumentRoot    /var/www/capistrano_project_2/current/public/
+RailsEnv        development
+</VirtualHost>
+
+	
+'/etc/hosts':
+
+127.0.0.1       localhost
+127.0.1.1       amol-desktop
+192.168.0.130   local.testphp.com
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+Restarting Services:
+
+$sudo /etc/init.d/apache2 restart       
+
+=============================================================================================================================================================================
+
+Finally we are going to check our PHP application by using local domain name 'local.testphp.com'
+
+Enjoy It !!	
