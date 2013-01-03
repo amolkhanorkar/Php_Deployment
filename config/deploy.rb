@@ -15,7 +15,7 @@ role :app, "192.168.0.130"                          # This may be the same as yo
 set :deploy_to, "/var/www/Php_Deployment"
 set :document_root, "/var/www/Php_Deployment/httpdocs/current"
 set :use_sudo, false
-set :keep_releases, 5
+set :keep_releases, 4 
 
 # if you want to clean up old releases on each deploy uncomment this:
 # after "deploy:restart", "deploy:cleanup"
